@@ -60,7 +60,7 @@ def custom_collate_fn(batch, pad_idx):
     return {'input_ids': torch.tensor(input_ids), 'labels': torch.tensor(labels), 'attention_mask': torch.tensor(attention_mask)}
 
 
-def get_data(test_reviews, model_name, batch_size=4):
+def get_data(model_name, batch_size=4):
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -80,7 +80,37 @@ def get_data(test_reviews, model_name, batch_size=4):
 
 
 
+class TextClassifier(torch.nn.Module):
+    def __init__(self, hidden_size, do_activation=False, dropout=0.1):
+        super(TextClassifier, self).__init__()
+        self.output_dim = 1
+        self.bert_layer = BertModel.from_pretrained(model_name)
+        self.dropout_rate = dropout
+        self.do_activation = do_activation
+        if dropout != 0:
+            self.dropout=nn.Dropout(dropout)
+        if do_activation:
+            self.activation = nn.ReLU()
+        self.linear_relevance = nn.Linear(in_features=768, out_features=1)
+        self.linear_sentiment = nn.Linear(in_features=768, out_features=1)
+        self.linear_object = nn.Linear(in_features=768, out_features=3)
 
+    def forward(self, input_ids, attention_mask):
+        x = input_ids
+
+        if len(x.shape) == 1:
+            x = x.view(1, x.shape[0])  # add dummy batch for single sample
+
+        x = self.bert_layer(x, attention_mask=attention_mask)[1]
+
+        if self.dropout_rate != 0:
+            x = self.dropout(x)
+        if self.do_activation:
+            x = self.activation(x)
+        rel = self.linear_relevance(x)
+        sent = self.linear_sentiment(x)
+        obj = self.linear_object(x)
+        return rel, sent, obj
 
     
     
@@ -236,14 +266,22 @@ def get_emotions(questions):
     
     
     
-def inference(review):
-    
-   
     
     
- 
     
     
+    
+    
+    
+    
+
+if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file", default="data/sample_reviews.txt", type=str)
+    parser.add_argument("--save_to", default="data/preds_main.csv", type=str)
+    
+    args = parser.parse_args()
     
     
     device = torch.device('cuda' if torch.cuda.is_available()  else 'cpu')
@@ -251,14 +289,12 @@ def inference(review):
     sigmoid = torch.nn.Sigmoid()
     softmax = torch.nn.Softmax(-1)
     
-    
-    
-    df = pd.DataFrame.from_dict(review)
-    
-        
-        
+    # with open(args.file) as f:
+    #     lines = f.read().split('####\n')
+    df = pd.read_csv(args.file)
     df['agg'] = df['question_2'] + '[SEP]' + df['question_3'] + '[SEP]' \
         + df['question_4'] + '[SEP]' + df['question_5']
+    
     
     
     
@@ -266,11 +302,14 @@ def inference(review):
     
     
     model_name = 'ai-forever/ruBert-base'
+    # model_name = 'bert-base-cased'
+    # model_name = 'bert-large-uncased'
 
-    dataloader_test = get_data(test_reviews, model_name, batch_size=1)
+    dataloader_test = get_data(model_name, batch_size=4)
 
 
     keys_of_dataset = ['input_ids', 'attention_mask']
+
 
 
     params = {'dropout': 0.1,
@@ -278,12 +317,10 @@ def inference(review):
              'lr' : 5e-5,
              'num_epochs': 9}
 
-    # model = TextClassifier(model_name, hidden_size=128, dropout=params['dropout'], do_activation=params['do_activation'])
+    model = TextClassifier(hidden_size=128, dropout=params['dropout'], do_activation=params['do_activation'])
 
 
     checkpoint = 'checkpoint/bert_model.pt'
-    # model.load_state_dict(checkpoint)
-    
     model = torch.load(checkpoint, map_location=device)
     
     
@@ -314,7 +351,7 @@ def inference(review):
             preds_sent.extend(sent.round())
             preds_sent_prob.extend(sent)
             
-            preds_obj_prob.extend(softmax(obj).detach().cpu().numpy())
+            preds_obj_prob.extend(softmax(obj).detach().cpu().numpy().tolist())
             preds_obj.extend(torch.argmax(obj, -1).detach().cpu().numpy().flatten())
             
             
@@ -353,7 +390,6 @@ def inference(review):
     #                     'sent_prob': preds_sent_prob,
     #                     'obj_prob': preds_obj_prob,)
     preds[['rel', 'sent']] = preds[['rel', 'sent']].astype(int)
-    # preds.to_csv(args.save_to, index=False)
-    return preds
+    preds.to_csv(args.save_to, index=False)
     
             
