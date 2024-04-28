@@ -22,16 +22,15 @@
    - использовать функцию в соответсвующем ноутбуке
 2. **Основная задача(инференс на одном отзыве):**
    - выполнить команду ```python inference/Bert+ASTE/main_inference.py main_inference.py --file **path/to/data.csv**```
-     docker pull shadowp1e/tg-bot
-docker run shadowp1e/tg-bot
+     
 3. **Запусе веб-интерфейса + бота:**
    - установить докер
-   - сначала запустить бота:
-      - ```docker pull shadowp1e/tg-bot```
-      - ```docker run shadowp1e/tg-bot```
-   - затем сам веб:
+   - сначала запустить api:
       - ```docker pull shadowp1e/fastapi-backend```
       - ```docker run shadowp1e/fastapi-backend```
+   - затем tg бота:
+      - ```docker pull shadowp1e/tg-bot```
+      - ```docker run shadowp1e/tg-bot```
 4. **Запуск демонстрации графиков на streamlit:**
    - cd streamlit
    - ```streamlit run streamlit_app.py```
