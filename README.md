@@ -12,6 +12,8 @@
 
 1. */inference* - папка с кодом инференса для моделей **LLM, RuBert, SPAN-ASTE, Emotional-Bert**. Также здесь **кластеризация отзывов** и **отдельных вопросов из них**
 2. */triplets* - папка анализом **триплетов, построением графиков и кластеразацией аспектов/мнений/аспектов+мнений**
+3. */web* - папка с последней версией кода(рекомендуется использовать докер)
+4. */streamlit* - папка с кодом для запуска небольшой демонстрации графиков и функционала на *streamlit*
    
 ### *Инструкции по запуску кода*
 
@@ -20,10 +22,20 @@
    - использовать функцию в соответсвующем ноутбуке
 2. **Основная задача(инференс на одном отзыве):**
    - выполнить команду ```python inference/Bert+ASTE/main_inference.py main_inference.py --file **path/to/data.csv**```
+     docker pull shadowp1e/tg-bot
+docker run shadowp1e/tg-bot
 3. **Запусе веб-интерфейса + бота:**
    - установить докер
-   - ```docker pull *образ*```
-   - ```docker-compose up --build```
+   - сначала запустить бота:
+      - ```docker pull shadowp1e/tg-bot```
+      - ```docker run shadowp1e/tg-bot```
+   - затем сам веб:
+      - ```docker pull shadowp1e/fastapi-backend```
+      - ```docker run shadowp1e/fastapi-backend```
 4. **Запуск демонстрации графиков на streamlit:**
    - cd streamlit
-   - ```streamlit run streamlit_app.py``` 
+   - ```streamlit run streamlit_app.py```
+  
+## Давайте вместе сделаем обучение студентов *GeekBrains*  более **удобным и эффективным**!
+
+**ALT+F4**
